@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Agropecuaria Uraba - POS & Inventario</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-dark: #1b5e20;
+            --primary-soft: #e8f5e9;
+            --bg: #eff3f1;
+            --card-bg: #ffffff;
+            --text: #1f2d1f;
+            --muted: #5f6f61;
+            --border: #dfe9e2;
+            --danger: #d32f2f;
+            --warning: #fbc02d;
+            --success: #388e3c;
+            --shadow: 0 12px 28px rgba(32, 69, 39, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #edf5ee 0%, #f7f9f8 100%);
+            color: var(--text);
+            margin: 0;
+            padding: 24px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 18px 22px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            gap: 16px;
+        }
+
+        header h2 {
+            margin: 0;
+            font-size: clamp(1.3rem, 2vw, 1.8rem);
+        }
+
+        header small {
+            display: inline-block;
+            margin-top: 4px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .network-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .online { background-color: var(--success); color: white; }
+        .offline { background-color: var(--danger); color: white; }
+
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 22px 0;
+        }
+
+        .tab-btn {
+            padding: 12px 18px;
+            border: 1px solid transparent;
+            background: #eaf1ea;
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 10px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .tab-btn:hover {
+            background: #dfeee0;
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 8px 18px rgba(46, 125, 50, 0.18);
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--card-bg);
+            padding: 22px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .tab-content.active { display: block; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            border: 1px solid var(--border);
+            padding: 18px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #ffffff 0%, #fafcfb 100%);
+            box-shadow: 0 6px 18px rgba(51, 64, 53, 0.04);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: var(--text);
+            font-size: 1.2rem;
+        }
+
+        .stock-badge {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .stock-green { background-color: var(--success); }
+        .stock-yellow { background-color: var(--warning); }
+        .stock-red { background-color: var(--danger); }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cfd8d1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12);
+        }
+
+        button.btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #3a8a3d 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-shadow: 0 8px 18px rgba(46, 125, 50, 0.2);
+        }
+
+        button.btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #265f29 100%);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #d3d8d4;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 1px solid #e8ece9;
+        }
+
+        th {
+            background: #f2f7f2;
+            color: var(--text);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        tbody tr:hover {
+            background: #f9fbf9;
+        }
+
+        .alert-box {
+            background: linear-gradient(90deg, #fff1f1 0%, #fff8f8 100%);
+            color: var(--danger);
+            padding: 12px 14px;
+            border-left: 4px solid var(--danger);
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 6px 15px rgba(211, 47, 47, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .nav-tabs {
+                gap: 8px;
+            }
+
+            .tab-btn {
+                flex: 1 1 100%;
+                text-align: center;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h2 style="margin:0;">Red Agropecuaria de Urabá</h2>
+            <small>Sucursal: Apartadó / Chigorodó</small>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div id="statusBadge" class="network-status online">
+                <span id="statusDot">●</span> <span id="statusText">ONLINE</span>
+            </div>
+            <button onclick="toggleNetwork()" style="width: auto; padding: 6px 12px; font-size: 0.8em;">Simular Cambio de Red</button>
+        </div>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" data-tab="pos" onclick="switchTab('pos', event)">🛒 Módulo POS (Ventas)</button>
+        <button class="tab-btn" data-tab="bodega" onclick="switchTab('bodega', event)">📦 Bodega & Lotes (QR)</button>
+        <button class="tab-btn" data-tab="alertas" onclick="switchTab('alertas', event)">🔔 Alertas Reabastecimiento</button>
+        <button class="tab-btn" data-tab="sync" onclick="switchTab('sync', event)">🔄 Cola Sincronización Offline (<span id="syncCount">0</span>)</button>
+    </div>
+
+    <!-- MÓDULO POS -->
+    <div id="pos" class="tab-content active">
+        <div class="grid">
+            <div class="card">
+                <h3>Facturación en Mostrador</h3>
+                <div class="form-group">
+                    <label>Estrategia de Precio (Perfil Cliente):</label>
+                    <select id="clientStrategy" onchange="updateCartUI()">
+                        <option value="detal">Cliente Detal (Tarifa Estándar)</option>
+                        <option value="bananera">Empresa Bananera (15% Desc. Volumen)</option>
+                        <option value="convenio">Convenio Institucional (20% Subsidio)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Seleccionar Agroquímico / Fertilizante:</label>
+                    <select id="posProductSelect">
+                        <!-- Cargado dinámicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cantidad (Sacos / Litros):</label>
+                    <input type="number" id="posQuantity" value="1" min="1">
+                </div>
+                <button class="btn-primary" onclick="addToCart()">Agregar a la Factura</button>
+            </div>
+
+            <div class="card">
+                <h3>Resumen de Factura</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cant.</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartTable">
+                        <tr><td colspan="3" style="text-align:center;">Carrito vacío</td></tr>
+                    </tbody>
+                </table>
+                <h3 style="text-align: right; margin-top: 15px;">Total: $<span id="cartTotal">0.00</span></h3>
+                <button class="btn-primary" id="btnProcessSale" onclick="processSale()" disabled>Confirmar y Facturar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÓDULO BODEGA -->
+    <div id="bodega" class="tab-content">
+        <div class="grid">
+            <div class="card">
+                <h3>Registro Rápido de Bodega (Tablet / QR)</h3>
+                <div class="form-group">
+                    <button class="btn-primary" style="background:#0288d1;" onclick="simulateQRScan()">📷 Simular Escaneo Código QR/Lote</button>
+                </div>
+                <div class="form-group">
+                    <label>Producto:</label>
+                    <input type="text" id="whProduct" readonly placeholder="Escanee un código...">
+                </div>
+                <div class="form-group">
+                    <label>Número de Lote:</label>
+                    <input type="text" id="whLot" placeholder="Ej: LOT-2026-X9">
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Caducidad:</label>
+                    <input type="date" id="whExp">
+                </div>
+                <div class="form-group">
+                    <label>Cantidad a Ingresar / Despachar:</label>
+                    <input type="number" id="whQty" value="10">
+                </div>
+                <button class="btn-primary" onclick="updateStockFromBodega()">Actualizar Inventario Físico</button>
+            </div>
+
+            <div class="card">
+                <h3>Inventario Actual por Sede</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Estado</th>
+                            <th>Producto</th>
+                            <th>Lote</th>
+                            <th>Stock</th>
+                            <th>Sede</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTable">
+                        <!-- Cargado dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÓDULO ALERTAS -->
+    <div id="alertas" class="tab-content">
+        <h3>Notificaciones de Reabastecimiento (Patrón Observador)</h3>
+        <p>Servicio automático de monitoreo de umbrales de stock mínimo.</p>
+        <div id="alertsContainer">
+            <p style="color:#666;">No hay alertas críticas en este momento.</p>
+        </div>
+    </div>
+
+    <!-- COLA OFFLINE -->
+    <div id="sync" class="tab-content">
+        <h3>Transacciones Almacenadas Localmente (IndexedDB / Cache)</h3>
+        <p>Las ventas realizadas sin conexión a internet se guardan en el dispositivo y se sincronizan al restaurar la red.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Venta</th>
+                    <th>Detalle</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="offlineTable">
+                <tr><td colspan="4" style="text-align:center;">No hay transacciones pendientes.</td></tr>
+            </tbody>
+        </table>
+        <br>
+        <button class="btn-primary" onclick="syncOfflineQueue()">Forzar Sincronización Manual</button>
+    </div>
+
+    <script>
+        // ESTADO DE LA APLICACIÓN
+        let isOnline = true;
+        let cart = [];
+        let offlineQueue = [];
+        let alerts = [];
+
+        const fallbackInventory = [
+            { id: '1', name: 'Fertilizante Úrea 46%', price: 120000, stock: 15, minStock: 10, lot: 'UT-9921', exp: '2027-05-12', branch: 'Apartadó' },
+            { id: '2', name: 'Agroquímico BananoProtect', price: 85000, stock: 4, minStock: 8, lot: 'BP-8812', exp: '2026-11-30', branch: 'Chigorodó' },
+            { id: '3', name: 'Abono Complejo NPK', price: 140000, stock: 2, minStock: 5, lot: 'NPK-001', exp: '2028-01-15', branch: 'Apartadó' },
+            { id: '4', name: 'Fungicida Agrícola Premium', price: 95000, stock: 0, minStock: 5, lot: 'FG-4401', exp: '2026-12-01', branch: 'Chigorodó' }
+        ];
+        let inventory = [...fallbackInventory];
+
+        async function loadInventoryFromAPI() {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) throw new Error('API no disponible');
+                const data = await response.json();
+                if (Array.isArray(data) && data.length) {
+                    inventory = data;
+                    renderInventory();
+                    renderPOSProducts();
+                    evaluateStockObservers();
+                    return;
+                }
+            } catch (error) {
+                console.warn('Falling back to local inventory data:', error);
+            }
+
+            inventory = [...fallbackInventory];
+            renderInventory();
+            renderPOSProducts();
+            evaluateStockObservers();
+        }
+
+        async function loadAlertsFromAPI() {
+            try {
+                const response = await fetch('/api/alerts');
+                if (!response.ok) return;
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    alerts = data.map(item => `⚠️ <strong>${item.title}</strong>: ${item.message}`);
+                    renderAlerts();
+                }
+            } catch (error) {
+                console.warn('No se pudieron cargar alertas:', error);
+            }
+        }
+
+        function renderAlerts() {
+            const container = document.getElementById('alertsContainer');
+            if (!alerts.length) {
+                container.innerHTML = '<p style="color:#666;">No hay alertas críticas en este momento.</p>';
+                return;
+            }
+            container.innerHTML = alerts.map(a => `<div class="alert-box">${a}</div>`).join('');
+        }
+
+        // INICIALIZACIÓN
+        window.onload = async function() {
+            await loadInventoryFromAPI();
+            await loadAlertsFromAPI();
+        };
+
+        // CAMBIO DE PESTAÑAS
+        function switchTab(tabId, event) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            const targetBtn = event ? event.currentTarget : document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+        }
+
+        // SIMULACIÓN RED (ONLINE / OFFLINE)
+        function toggleNetwork() {
+            isOnline = !isOnline;
+            const badge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            
+            if (isOnline) {
+                badge.className = 'network-status online';
+                statusText.innerText = 'ONLINE';
+                syncOfflineQueue();
+            } else {
+                badge.className = 'network-status offline';
+                statusText.innerText = 'OFFLINE (Modo Local)';
+            }
+        }
+
+        // RENDERIZAR TABLA DE INVENTARIO Y SEMÁFOROS
+        function renderInventory() {
+            const tbody = document.getElementById('inventoryTable');
+            tbody.innerHTML = '';
+
+            inventory.forEach(item => {
+                let colorClass = 'stock-green';
+                if (item.stock === 0) colorClass = 'stock-red';
+                else if (item.stock <= item.minStock) colorClass = 'stock-yellow';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="stock-badge ${colorClass}"></span> ${item.stock === 0 ? 'Sin Stock' : (item.stock <= item.minStock ? 'Bajo' : 'OK')}</td>
+                        <td><strong>${item.name}</strong></td>
+                        <td>${item.lot}</td>
+                        <td>${item.stock} unidades</td>
+                        <td>${item.branch}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderPOSProducts() {
+            const select = document.getElementById('posProductSelect');
+            select.innerHTML = '';
+            inventory.forEach(item => {
+                const disabled = item.stock === 0 ? 'disabled' : '';
+                select.innerHTML += `<option value="${item.id}" ${disabled}>${item.name} - Stock: ${item.stock} ($${item.price.toLocaleString()})</option>`;
+            });
+        }
+
+        // PATRÓN ESTRATEGIA: CÁLCULO DE PRECIOS
+        function getDiscountMultiplier() {
+            const strategy = document.getElementById('clientStrategy').value;
+            if (strategy === 'bananera') return 0.85; // 15% Descuento por volumen
+            if (strategy === 'convenio') return 0.80; // 20% Subsidio
+            return 1.0; // Detal / Estándar
+        }
+
+        function addToCart() {
+            const productId = document.getElementById('posProductSelect').value;
+            const qty = parseInt(document.getElementById('posQuantity').value);
+            const product = inventory.find(i => i.id === productId);
+
+            if (!product || qty > product.stock) {
+                alert('No hay suficiente inventario disponible.');
+                return;
+            }
+
+            const existing = cart.find(c => c.id === productId);
+            if (existing) {
+                existing.qty += qty;
+            } else {
+                cart.push({ id: product.id, name: product.name, price: product.price, qty: qty });
+            }
+
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const tbody = document.getElementById('cartTable');
+            tbody.innerHTML = '';
+            let total = 0;
+            const multiplier = getDiscountMultiplier();
+
+            if (cart.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Carrito vacío</td></tr>';
+                document.getElementById('btnProcessSale').disabled = true;
+            } else {
+                cart.forEach(item => {
+                    const subtotal = item.price * item.qty * multiplier;
+                    total += subtotal;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.qty}</td>
+                            <td>$${subtotal.toLocaleString('es-CO')}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('btnProcessSale').disabled = false;
+            }
+
+            document.getElementById('cartTotal').innerText = total.toLocaleString('es-CO');
+        }
+
+        // PATRÓN OBSERVADOR: EVALUAR STOCK Y GENERAR ALERTAS
+        function evaluateStockObservers() {
+            alerts = [];
+            inventory.forEach(item => {
+                if (item.stock <= item.minStock) {
+                    alerts.push(`⚠️ <strong>ALERTA DE REABASTECIMIENTO:</strong> El producto <em>${item.name}</em> (Sede ${item.branch}) alcanzó el punto de reorden (${item.stock} unidades restantes).`);
+                }
+            });
+
+            const container = document.getElementById('alertsContainer');
+            if (alerts.length === 0) {
+                container.innerHTML = '<p style="color:#666;">No hay alertas críticas en este momento.</p>';
+            } else {
+                container.innerHTML = alerts.map(a => `<div class="alert-box">${a}</div>`).join('');
+            }
+        }
+
+        // CONFIRMAR Y FACTURAR (CON ENFOQUE OFFLINE-FIRST)
+        async function processSale() {
+            const transactionId = 'TRX-' + Math.floor(Math.random() * 89999 + 10000);
+            const multiplier = getDiscountMultiplier();
+            let total = 0;
+
+            const salePayload = {
+                cart: cart.map(item => ({ id: item.id, qty: item.qty })),
+                strategy: document.getElementById('clientStrategy').value
+            };
+
+            if (!isOnline) {
+                cart.forEach(cartItem => {
+                    const item = inventory.find(i => i.id === cartItem.id);
+                    if (item) {
+                        item.stock -= cartItem.qty;
+                        total += item.price * cartItem.qty * multiplier;
+                    }
+                });
+
+                const transactionData = {
+                    id: transactionId,
+                    details: cart.map(c => `${c.qty}x ${c.name}`).join(', '),
+                    total: total,
+                    timestamp: new Date().toLocaleTimeString()
+                };
+
+                offlineQueue.push(transactionData);
+                renderOfflineQueue();
+                alert(`Venta registrada LOCALMENTE (Modo Offline). Transacción ${transactionId} guardada en caché.`);
+            } else {
+                try {
+                    const response = await fetch('/api/sales', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(salePayload)
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || 'Error al procesar la venta');
+                    }
+
+                    alert(`Venta procesada correctamente. Factura #${result.id} - Total: $${Number(result.total).toLocaleString('es-CO')}`);
+                } catch (error) {
+                    console.error(error);
+                    alert('No se pudo procesar la venta en la API. Se mantendrá en modo local.');
+                    cart.forEach(cartItem => {
+                        const item = inventory.find(i => i.id === cartItem.id);
+                        if (item) {
+                            item.stock -= cartItem.qty;
+                        }
+                    });
+                }
+            }
+
+            cart = [];
+            updateCartUI();
+            renderInventory();
+            renderPOSProducts();
+            evaluateStockObservers();
+            await loadAlertsFromAPI();
+        }
+
+        function renderOfflineQueue() {
+            const tbody = document.getElementById('offlineTable');
+            document.getElementById('syncCount').innerText = offlineQueue.length;
+
+            if (offlineQueue.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No hay transacciones pendientes.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            offlineQueue.forEach(trx => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${trx.id}</strong></td>
+                        <td>${trx.details}</td>
+                        <td>$${trx.total.toLocaleString('es-CO')}</td>
+                        <td><span style="color:orange; font-weight:bold;">Pendiente Sync</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function syncOfflineQueue() {
+            if (!isOnline) {
+                alert('No se puede sincronizar: el dispositivo continúa sin conexión a internet.');
+                return;
+            }
+
+            if (offlineQueue.length === 0) {
+                alert('No hay ventas offline pendientes por sincronizar.');
+                return;
+            }
+
+            const totalSynced = offlineQueue.length;
+            offlineQueue = [];
+            renderOfflineQueue();
+            alert(`Sincronización exitosa: Se subieron ${totalSynced} transacciones pendientes al servidor central.`);
+        }
+
+        // SIMULACIÓN DE ESCANEO BODEGA
+        function simulateQRScan() {
+            const randomProduct = inventory[Math.floor(Math.random() * inventory.length)];
+            document.getElementById('whProduct').value = randomProduct.name;
+            document.getElementById('whLot').value = randomProduct.lot;
+            document.getElementById('whExp').value = randomProduct.exp;
+            document.getElementById('whQty').value = 10;
+        }
+
+        async function updateStockFromBodega() {
+            const productName = document.getElementById('whProduct').value;
+            const qty = parseInt(document.getElementById('whQty').value);
+
+            const product = inventory.find(i => i.name === productName);
+            if (!product) {
+                alert('Por favor, escanee o seleccione un producto válido.');
+                return;
+            }
+
+            const payload = {
+                productName: product.name,
+                qty: qty,
+                lot: document.getElementById('whLot').value,
+                exp: document.getElementById('whExp').value
+            };
+
+            try {
+                const response = await fetch('/api/stock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Error actualizando stock');
+                }
+
+                product.stock = result.stock;
+                product.lot = payload.lot || product.lot;
+                product.exp = payload.exp || product.exp;
+                renderInventory();
+                renderPOSProducts();
+                evaluateStockObservers();
+                await loadAlertsFromAPI();
+                alert(`Inventario de ${product.name} actualizado. Nuevo stock: ${product.stock}`);
+            } catch (error) {
+                console.warn('Uso local de inventario:', error);
+                product.stock += qty;
+                product.lot = document.getElementById('whLot').value;
+                product.exp = document.getElementById('whExp').value;
+                renderInventory();
+                renderPOSProducts();
+                evaluateStockObservers();
+                alert(`Inventario de ${product.name} actualizado localmente. Nuevo stock: ${product.stock}`);
+            }
+        }
+    </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+</body>
+</html>
